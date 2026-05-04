@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rundle Rumble</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <style>
+        /* Main content container centered */
+        #mainContent {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+            min-height: 60vh;
+        }
+
+        /* Rules card */
+        .rules-card {
+            background-color: #ffffff;
+            padding: 30px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 100%;
+            line-height: 1.6;
+        }
+
+        .rules-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #000000;
+            font-size: 24px;
+        }
+
+        .rules-card h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+
+        .rules-card p,
+        .rules-card li {
+            color: #000000;
+            font-size: 16px;
+        }
+
+        .rules-card ol,
+        .rules-card ul {
+            padding-left: 20px;
+        }
+
+        /* Optional: links inside rules */
+        .rules-card a {
+            color: #32adff;
+            text-decoration: none;
+        }
+
+        .rules-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* Title Image */
+        #header img {
+            height: 85px;
+            /* adjust size here */
+            max-width: 100%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <!-- Header -->
+        <div id="header" style="position: relative;">
+            <img src="img/title.png" onclick="window.location.href='index.html'" style="cursor: pointer;" alt="Rundle Rumble Title">
+            <h2 id="welcomeMessage"></h2>
+        </div>
+
+        <!-- Navbar -->
+        <div id="navbar">
+            <div class="nav-left">
+    <button onclick="window.location.href='index.html'">Home</button>
+    <button 
+      onclick="window.location.href='scoring.html'"
+      style="background-color: #23465e; color: white; font-weight: bold; cursor: default;"
+      onmouseover="this.style.backgroundColor='#33465e';"
+      onmouseout="this.style.backgroundColor='#23465e';"
+    >
+      Scoring
+    </button>
+    <button onclick="window.location.href='analytics.html'">Analytics</button>
+  </div>
+            <div class="nav-right">
+                <button onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main content: rules -->
+        <div id="mainContent">
+            <div class="rules-card">
+                <h2>How To Get Points!</h2>
+
+                <p>In <strong>Rundle Rumble</strong>, your goal is to predict the weekly <strong>AFL ladder
+                        positions</strong> as accurately as possible. The closer your predictions are to the actual
+                    ladder, the more points you earn.</p>
+
+                <h3>Scoring</h3>
+                <ul>
+                    <li><strong>Exact position</strong>: 5 points</li>
+                    <li><strong>1 position away</strong>: 3 points</li>
+                    <li><strong>2 positions away</strong>: 2 points</li>
+                    <li><strong>3 positions away</strong>: 1 point</li>
+                    <li><strong>Top 4 guess</strong>: 10 points each</li>
+                    <li><strong>Bottom 4 guess</strong>: 5 points each</li>
+                </ul>
+
+                <h3>Team Moves</h3>
+                <ul>
+                    <li>You can request <strong>one team move per week</strong> by contacting <strong>Anthony</strong>.
+                    </li>
+                    <li>This allows you to move a team <strong>one position up or down</strong> in your ladder.</li>
+                    <li><strong>2 points</strong> will be deducted from your total for each move.</li>
+                </ul>
+
+                <h3>Total Points</h3>
+                <p>Your <strong>total points</strong> are calculated as:</p>
+                <ul>
+                    <li>Score of your <strong>initial ladder</strong> against the final real ladder</li>
+                    <li>+ Score of your <strong>current ladder</strong> (after swaps) against the final ladder</li>
+                    <li>- Deductions from any <strong>team moves</strong> (-2 points per move)</li>
+                </ul>
+
+                <h3>Objective</h3>
+                <p>Aim to get the <strong>highest total points</strong> by predicting the ladder as accurately as
+                    possible each week. Use your team move strategically to maximize points while staying competitive.
+                </p>
+            </div>
+
+
+        </div>
+        <!-- Footer -->
+    <footer>
+
+      <p>&copy; 2025 Rundle Rumble</p>
+    </footer>
+
+        <script src="js/auth.js"> </script>
+        <script>
+            const currentUser = localStorage.getItem("loggedInUser");
+
+            if (!currentUser) {
+                window.location.href = "login.html";
+            }
+
+            // ================= LOGOUT =================
+            function logout() {
+                localStorage.removeItem("loggedInUser");
+                localStorage.removeItem("userPin");
+                window.location.href = "login.html";
+            }
+        </script>
+
+</body>
+
+</html>

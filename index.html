@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Rundle Rumble</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+  <link rel="icon" type="image/png" href="img/logo.png">
+</head>
+
+<body>
+  <div id="container">
+
+    <div id="header" style="position: relative;">
+      <img src="img/title.png" onclick="window.location.href='index.html'" style="cursor: pointer;"
+        alt="Rundle Rumble Title">
+      <h2 id="welcomeMessage"></h2>
+    </div>
+
+    <div id="navbar">
+      <div class="nav-left">
+        <button onclick="window.location.href='index.html'"
+          style="background-color: #23465e; color: white; font-weight: bold; cursor: default;"
+          onmouseover="this.style.backgroundColor='#33465e';" onmouseout="this.style.backgroundColor='#23465e';">
+          Home
+        </button>
+        <button onclick="window.location.href='scoring.html'">Scoring</button>
+        <button onclick="window.location.href='analytics.html'">Analytics</button>
+      </div>
+      <div class="nav-right">
+        <button onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <div id="mainContent">
+
+      <div id="pointsDisplay">
+        <div class="points-item">
+          <span class="points-label">Total Points</span>
+          <strong><span id="totalPoints">—</span></strong>
+        </div>
+        <div class="points-divider"></div>
+        <div class="points-item">
+          <span class="points-label">Pts Var This Week</span>
+          <strong><span id="weeklyPoints">—</span></strong>
+        </div>
+      </div>
+
+      <div id="leaderboardContainer">
+        <h3>Leaderboard</h3>
+        <!-- scrollable wrapper -->
+        <div id="leaderboardTableWrapper">
+          <table id="leaderboardTable">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Total Points</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3" class="loading-cell">Loading leaderboard...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="AnalyticsContainer">
+        <h3>Weekly Scores</h3>
+        <canvas id="weeklyScoreChart" style="width:100%;max-width:700px"></canvas>
+        <p id="weeklyScoreError" style="color:red"></p>
+      </div>
+
+      <div id="ladderContainer">
+        <h3>Ladders</h3>
+        <div id="laddersWrapper">
+
+          <!-- USER LADDER WITH TABS -->
+          <div class="ladderBox" id="userLadderBox">
+            <h4>My Ladder Prediction</h4>
+            <div class="ladderTabs">
+              <button class="ladderTab active" onclick="switchLadder('live')">Current</button>
+              <button class="ladderTab" onclick="switchLadder('pre')">Preseason</button>
+            </div>
+
+            <ol id="userLadderLive">
+              <li class="loading-cell">Loading your ladder...</li>
+            </ol>
+            <ol id="userLadderPre" style="display:none">
+              <li class="loading-cell">Loading preseason ladder...</li>
+            </ol>
+          </div>
+
+          <!-- AFL LADDER -->
+          <div class="ladderBoxAFL" id="aflLadderBox">
+            <h4>Current AFL Ladder</h4>
+
+            <div class="ladderTabsINVS">
+              <button class="ladderTabINVS" onclick=""></button>
+              <button class="ladderTabINVS" onclick=""></button>
+            </div>
+
+            <ol id="aflLadder">
+              <li class="loading-cell">Loading real ladder...</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+
+      <p>&copy; 2025 Rundle Rumble</p>
+    </footer>
+
+    <script>
+      const apiUrl = "https://script.google.com/macros/s/AKfycbxb4J8tD1xuScSGjJx8JxLEg6osAFim8A5ObglE7ZXcNo05QewFQLDdrWVU-o5smjqW/exec";
+      const currentUser = localStorage.getItem("loggedInUser");
+
+      if (!currentUser) {
+        window.location.href = "login.html";
+      } else {
+        document.getElementById("welcomeMessage").textContent = "Welcome, " + currentUser;
+      }
+
+      function logout() {
+        localStorage.removeItem("loggedInUser");
+        localStorage.removeItem("userPin");
+        window.location.href = "login.html";
+      }
+
+      // ---------- UTILITY: load from cache ----------
+      function loadFromCache(key, renderFn) {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          try { renderFn(JSON.parse(cached)); } catch { }
+        }
+      }
+
+      // ---------- LEADERBOARD ----------
+      function renderLeaderboard(users) {
+        if (!Array.isArray(users)) return;
+        users.sort((a, b) => Number(b["Total Points"]) - Number(a["Total Points"]));
+
+        const tbody = document.querySelector("#leaderboardTable tbody");
+        tbody.innerHTML = "";
+
+        let userRow = null;
+
+        users.forEach((u, i) => {
+          const tr = document.createElement("tr");
+          if (u.Name === currentUser) {
+            tr.classList.add("current-user-row");
+            userRow = tr;
+          }
+          tr.innerHTML = `<td>${i + 1}</td><td>${u.Name}</td><td>${u["Total Points"]}</td>`;
+          tbody.appendChild(tr);
+
+          if (u.Name === currentUser) {
+            const totalPoints = Number(u["Total Points"]) || 0;
+            document.getElementById("totalPoints").textContent = totalPoints;
+            fetchWeeklyScores(totalPoints);
+          }
+        });
+
+        // Scroll so the current user's row is always in view.
+        // We wait a tick for the DOM to paint first.
+        if (userRow) {
+          requestAnimationFrame(() => {
+            const wrapper = document.getElementById("leaderboardTableWrapper");
+            const wrapperH = wrapper.clientHeight;
+            const rowTop   = userRow.offsetTop;
+            const rowH     = userRow.offsetHeight;
+            // Centre the row in the visible area
+            wrapper.scrollTop = rowTop - (wrapperH / 2) + (rowH / 2);
+          });
+        }
+      }
+
+      async function fetchLeaderboard() {
+        loadFromCache("cachedLeaderboard", renderLeaderboard);
+        try {
+          const res = await fetch(`${apiUrl}?action=database`);
+          const users = await res.json();
+          if (Array.isArray(users)) {
+            localStorage.setItem("cachedLeaderboard", JSON.stringify(users));
+            renderLeaderboard(users);
+          }
+        } catch (err) { console.error("Error fetching leaderboard:", err); }
+      }
+
+      // ---------- WEEKLY SCORES ----------
+      function renderWeeklyScores(data, totalPoints) {
+        const ctx = document.getElementById("weeklyScoreChart").getContext("2d");
+        const errorEl = document.getElementById("weeklyScoreError");
+        const weeklyPointsEl = document.getElementById("weeklyPoints");
+        errorEl.textContent = "";
+        weeklyPointsEl.textContent = "0";
+        if (!Array.isArray(data) || data.length === 0) return;
+        data.sort((a, b) => a.Week - b.Week);
+        const lastWeekScore = Number(data[data.length - 1].Score) || 0;
+        const weeklyPoints = totalPoints - lastWeekScore;
+        weeklyPointsEl.textContent = (weeklyPoints > 0 ? "+" : "") + weeklyPoints;
+
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map(d => `${d.Week}`),
+            datasets: [{
+              label: 'Weekly Scores',
+              data: data.map(d => d.Score),
+              fill: false,
+              lineTension: 0,
+              backgroundColor: "#E74C3C",
+              borderColor: "#E74C3C"
+            }]
+          },
+          options: {
+            scales: {
+              xAxes: [{ scaleLabel: { display: true, labelString: 'Weeks' } }],
+              yAxes: [{ ticks: { beginAtZero: true, suggestedMax: 150 }, scaleLabel: { display: true, labelString: 'Points' } }]
+            }
+          }
+        });
+      }
+
+      async function fetchWeeklyScores(totalPoints) {
+        loadFromCache(`cachedWeekly_${currentUser}`, data => renderWeeklyScores(data, totalPoints));
+        try {
+          const res = await fetch(`${apiUrl}?action=weeklyScores&user=${encodeURIComponent(currentUser)}`);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            localStorage.setItem(`cachedWeekly_${currentUser}`, JSON.stringify(data));
+            renderWeeklyScores(data, totalPoints);
+          }
+        } catch (err) { console.error("Error fetching weekly scores:", err); }
+      }
+
+      // ---------- LADDER STATE ----------
+      // Track loaded data so highlight only runs once both sides exist
+      const ladderState = { live: null, pre: null, afl: null };
+
+      // ---------- USER LADDER ----------
+      function renderUserLadder(ladder, type = "live") {
+        ladderState[type] = ladder;
+        const list = type === "pre"
+          ? document.getElementById("userLadderPre")
+          : document.getElementById("userLadderLive");
+        list.innerHTML = "";
+        ladder.slice(0, 18).forEach((teamName, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <div class="left-ladder">
+              <span class="ladder-rank">${index + 1}.</span>
+              <div class="team-info">
+                <img class="team-flag" src="img/teams/${encodeURIComponent(teamName)}.png" alt="${teamName}">
+                <span>| ${teamName}</span>
+              </div>
+            </div>
+            <span class="ladder-distance"></span>
+          `;
+          list.appendChild(li);
+        });
+        // Only highlight once AFL data is also present
+        if (ladderState.afl) highlightLadderDistances(type);
+      }
+
+      async function fetchUserLadder(type = "live") {
+        const key = type === "pre" ? `cachedPreLadder_${currentUser}` : `cachedLadder_${currentUser}`;
+        loadFromCache(key, data => renderUserLadder(data, type));
+        try {
+          const actionType = type === "pre" ? "preLadder" : "ladder";
+          const res = await fetch(`${apiUrl}?action=${actionType}&user=${encodeURIComponent(currentUser)}`);
+          const ladder = await res.json();
+          if (Array.isArray(ladder)) {
+            localStorage.setItem(key, JSON.stringify(ladder));
+            renderUserLadder(ladder, type);
+          }
+        } catch (err) { console.error("User ladder error:", err); }
+      }
+
+      // ---------- AFL LADDER ----------
+      function renderAFLLadder(ladder) {
+        ladderState.afl = ladder;
+        const list = document.getElementById("aflLadder");
+        list.innerHTML = "";
+        ladder.slice(0, 18).forEach((teamName, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <div class="left-ladder">
+              <span class="ladder-rank">${index + 1}.</span>
+              <div class="team-info">
+                <img class="team-flag" src="img/teams/${encodeURIComponent(teamName)}.png" alt="${teamName} Flag">
+                <span>| ${teamName}</span>
+              </div>
+            </div>
+            <span class="ladder-distance"></span>
+          `;
+          list.appendChild(li);
+        });
+        // Now AFL is ready — highlight whichever user ladders are already loaded
+        if (ladderState.live) highlightLadderDistances("live");
+        if (ladderState.pre)  highlightLadderDistances("pre");
+      }
+
+      async function fetchAFLLadder() {
+        loadFromCache("cachedAFLLadder", renderAFLLadder);
+        try {
+          const res = await fetch(`${apiUrl}?action=aflLadder`);
+          const ladder = await res.json();
+          if (Array.isArray(ladder)) {
+            localStorage.setItem("cachedAFLLadder", JSON.stringify(ladder));
+            renderAFLLadder(ladder);
+          }
+        } catch (err) { console.error("Error fetching AFL ladder:", err); }
+      }
+
+      // ---------- HIGHLIGHT DISTANCES ----------
+      function highlightLadderDistances(type = "live") {
+        const userItems = type === "pre"
+          ? document.querySelectorAll("#userLadderPre li")
+          : document.querySelectorAll("#userLadderLive li");
+        const aflItems = document.querySelectorAll("#aflLadder li");
+        const length = Math.min(userItems.length, aflItems.length);
+
+        for (let i = 0; i < length; i++) {
+          const li = userItems[i];
+          const leftDiv = li.querySelector(".left-ladder");
+          if (!leftDiv) continue;
+          const userTeam = leftDiv.querySelector(".team-info").textContent.replace("|", "").trim();
+          let aflIndex = -1;
+          for (let j = 0; j < aflItems.length; j++) {
+            const aflTeam = aflItems[j].querySelector(".team-info").textContent.replace("|", "").trim();
+            if (aflTeam === userTeam) { aflIndex = j; break; }
+          }
+          if (aflIndex === -1) continue;
+          const distance = aflIndex - i;
+          const absDistance = Math.abs(distance);
+          const displayText = distance === 0 ? "✔" : distance > 0 ? `🡣 ${absDistance}` : `🡡 ${absDistance}`;
+          const distanceClass = absDistance <= 3 ? `distance-${absDistance}` : "";
+          const distanceSpan = li.querySelector(".ladder-distance");
+          distanceSpan.className = `ladder-distance ${distanceClass}`;
+          distanceSpan.textContent = displayText;
+        }
+      }
+
+      // ---------- SWITCH TABS ----------
+      function switchLadder(type) {
+        document.querySelectorAll(".ladderTab").forEach(btn => btn.classList.remove("active"));
+        if (type === "live") document.querySelectorAll(".ladderTab")[0].classList.add("active");
+        else                 document.querySelectorAll(".ladderTab")[1].classList.add("active");
+
+        document.getElementById("userLadderLive").style.display = type === "live" ? "block" : "none";
+        document.getElementById("userLadderPre").style.display  = type === "pre"  ? "block" : "none";
+
+        // Toggle preseason background colour on the box
+        const box = document.getElementById("userLadderBox");
+        if (type === "pre") box.classList.add("preseason-active");
+        else                box.classList.remove("preseason-active");
+      }
+
+      // ---------- INIT ----------
+      function init() {
+        fetchLeaderboard();
+        fetchAFLLadder();
+        fetchUserLadder("live");
+        fetchUserLadder("pre");
+      }
+
+      init();
+    </script>
+</body>
+</html>

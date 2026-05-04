@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Rundle Rumble</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="img/logo.png">
+    <style>
+        #mainContent {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+        }
+
+        .login-card {
+            background-color: #ffffff;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            width: 320px;
+            text-align: center;
+        }
+
+        .login-card h1 {
+            margin-bottom: 25px;
+            font-size: 28px;
+            color: #333;
+        }
+
+        .login-card input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .login-card input[type="text"]:focus {
+            outline: none;
+            border-color: #32adff;
+            box-shadow: 0 0 5px rgba(231, 76, 60, 0.3);
+        }
+
+        .login-card button {
+            width: 100%;
+            padding: 10px 0;
+            border: none;
+            border-radius: 6px;
+            background-color: #66a5cf;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-card button:hover {
+            background-color: #77a6c5;
+        }
+
+        #errorMessage {
+            margin-top: 15px;
+            color: #E74C3C;
+            font-weight: bold;
+            min-height: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container">
+        <div id="header" style="position: relative;">
+            <img src="img/title.png" onclick="window.location.href='index.html'" style="cursor: pointer;" alt="Rundle Rumble Title">
+            <h2 id="welcomeMessage"></h2>
+        </div>
+
+        <div id="navbar">
+            <div class="nav-left">
+                <button onclick="">Home</button>
+                <button onclick="">Scoring</button>
+                <button onclick="">Analytics</button>
+            </div>
+            <div class="nav-right"></div>
+        </div>
+
+        <div id="mainContent">
+            <div class="login-card">
+                <h1>Login</h1>
+                <input type="text" id="codeInput" placeholder="Enter your pin">
+                <button onclick="login()">Enter</button>
+                <p id="errorMessage"></p>
+            </div>
+        </div>
+
+        <footer>
+    
+            <p>&copy; 2025 Rundle Rumble</p>
+        </footer>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+
+</html>
